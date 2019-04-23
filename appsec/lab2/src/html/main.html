@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link href="/css/bootstrap.min.css" rel="stylesheet" type="text/css">
+        <title>Insecure Image Poster</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="utf-8">
+        <style>
+            .grow {
+                transition: transform 0.5s;
+                transform: scale(1);
+            }
+            .grow:hover {
+                transform: scale(1.2);
+            }
+        </style>
+        <script src="/js/jquery.min.js"></script>
+        <script src="/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <div class="navbar navbar-expand-lg navbar-light bg-danger text-white">
+            <a class="navbar-brand text-white" href="/"><img src="/img/fragile.png" style="width:50px;margin-right:10px;">InsecureImage</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav mr-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link text-white" href="#">Home <span class="sr-only">(current)</span></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-white font-weight-bold" href="#" data-toggle="modal" data-target="#myModal">New Post</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="container pt-4 pb-4">
+            <h1 class="pb-2">Shared Images</h1>
+                <div class="row d-block">
+                    {% for post in posts %}
+                    <div class="col-md-4 pl-3 pr-3 pt-3 pb-3 float-left">
+                        <div class="card">
+                            <img class="card-img-top" src={{ post.url }} alt="Card image cap">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ post.title }}</h5>
+                                <p class="card-text">{{ post.content }}</p>
+                            </div>
+                            <div class="card-footer">
+                                <img data-index={{ post.id }} src="/img/like.png" class="grow like-post" style="height:25px; cursor:pointer"> {{ post.likes }} Likes
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div id="myModal" class="modal fade" role="dialog">
+            <div class="modal-dialog">
+      
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">Create a New Post</h4>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="post-title">Image Title</label>
+                        <input type="text" class="form-control" id="post-title" placeholder="Image Title">
+                    </div>
+                    <div class="form-group">
+                        <label for="post-url">Image URL</label>
+                        <input type="text" class="form-control" id="post-url" aria-describedby="urlHelps" placeholder="Image URL">
+                        <small id="urlHelps" class="form-text text-muted">Enter the link to your image</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-content">Post Content</label>
+                        <textarea class="form-control" id="post-content" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" id="post-btn" class="btn btn-success">Post</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            $('.like-post').each((i, el) => {
+                $(el).click(() => {
+                    index = $(el).attr("data-index");
+                    data = {
+                        id: index,
+                    }
+                    $.ajax({
+                        method: "POST",
+                        url: "/like-post", 
+                        data: data, 
+                        complete: function (response) {
+                            if (response.responseText == "success") {
+                                location.reload();
+                            }
+                            else {
+                                alert(response.responseText);
+                            }
+                        } 
+                    });
+                });
+            })
+
+            $('#post-btn').click(() => {
+                var expression = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)/gi;
+                var regex = new RegExp(expression);
+
+                if (!$("#post-url").val().match(regex) || $("#post-url").val().length > 200) {
+                    alert("Invalid URL");
+                    return;
+                }
+                else if ($("#post-title").val().length > 50) {
+                    alert("Your post title can't be more than 50 characters.");
+                    return;
+                }
+                else if ($("#post-content").val().length > 400) {
+                    alert("Your post can't be more than 400 characters.");
+                    return;
+                }
+
+                data = {
+                    url: $("#post-url").val(),
+                    title: $("#post-title").val(),
+                    content: $("#post-content").val()
+                }
+                $.ajax({
+                    method: "POST",
+                    url: "/new-post", 
+                    data: data, 
+                    complete: function (response) {
+                        if (response.responseText == "success") {
+                            location.reload();
+                        }
+                        else {
+                            alert(response.responseText);
+                        }
+                    } 
+                });
+            });
+        </script>
+    </body>
+</html>
